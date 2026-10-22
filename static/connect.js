@@ -14,8 +14,8 @@
     const health = await res.json();
     if (health.status !== 'ok' || !health.ffmpeg) throw Error('The video server is missing FFmpeg. Install FFmpeg and restart Reelcraft.');
     if (typeof setStatus !== 'function') throw Error('The editor script did not load. Reload the running app.');
-    message.textContent = 'Connected. Choose a video, then click Find my moments.';
-    button.textContent = 'Find my moments ↗';
+    message.textContent = 'Connected. Choose a video, then click Open video.';
+    button.textContent = document.getElementById('workflow').value === 'manual' ? 'Open video ↗' : 'Find my moments ↗';
     button.disabled = false;
   } catch (error) {
     button.textContent = 'Editor unavailable';

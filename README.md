@@ -11,7 +11,13 @@ python app.py
 
 Open the app on port 8000 on your own machine. The server binds to loopback by default. `PORT` can select another port. Setting `APP_PASSWORD` enables browser password protection (username `reelcraft`). All editor, API, upload and media requests require it; the read-only health check remains public. Public binding requires a password of at least 16 characters. Use HTTPS when hosting; Render provides HTTPS.
 
-Upload a video (2 GB / 4 hours maximum), choose a target length, and review up to five nonoverlapping moments ranked by average audio energy. Adjust the times, preview, choose center-cropped vertical (720×1280), square (720×720), or original framing, and download an H.264/AAC MP4. Exports are limited to 180 seconds.
+Upload a video (2 GB / 4 hours maximum) and mark your own moments using the default manual mode. Alternatively, enable audio-energy suggestions to review up to five nonoverlapping passages. Adjust the times, preview, choose center-cropped vertical (720×1280), square (720×720), or original framing, and download an H.264/AAC MP4. Exports are limited to 180 seconds.
+
+### Manual editing (default)
+
+Choose "Choose my own moments" and click **Open video**. This skips energy analysis. Watch or seek through the full source, pause and click **Set start here**, then find the ending and click **Set end here**. You can also type exact times in seconds. Give the moment a title and click **Save moment**. Choose **New moment** to make another; click a saved moment to adjust and save it, or Delete to remove it. Saved ranges exist only in the current tab and are lost on reload.
+
+Use **Preview selection** to check the cut, then **Export MP4** for each moment you want to keep. **Original** framing preserves the full source composition for editing elsewhere. Download the resulting MP4 and import it into CapCut or upload it into Canva. Add captions, effects, reframing and final publishing there. These are standard video exports, not native Canva/CapCut projects or a direct account integration. The app does not currently include automatic captions, effects or speaker tracking.
 
 Audio energy is a heuristic: it does not understand the story, transcribe speech, detect faces, or predict virality. Silent videos receive chronological suggestions. Review crops and context before posting. Social publishing is manual. Browser playback depends on the source codec; MP4/H.264 is recommended.
 
@@ -34,3 +40,5 @@ The Docker image installs FFmpeg and runs as an unprivileged user on `0.0.0.0:$P
 On a paid service with a persistent disk, mount it at `/var/data` and set `DATA_DIR=/var/data/reelcraft`. Files then persist but job metadata still resets at restart. No automatic deletion is configured: monitor disk usage and remove old files when the server is stopped.
 
 Optional frontend regression checks: `node --test tests/test_frontend.cjs` (Node.js is only needed for these tests).
+
+Optional browser smoke test: start `PORT=8001 python app.py`, then run `node tests/test_browser.cjs` with Playwright and Chromium installed. It exercises manual marking, multiple saved moments, preview playback, original-frame export and download.

@@ -51,11 +51,14 @@ def select_clips(energies, duration, length):
     return chosen
 
 
-def analyze(key, length):
+def analyze(key, length, manual=False):
     job = JOBS[key]
     try:
         path = DATA / key / 'source'
         duration, audio = probe(path)
+        if manual:
+            job.update(status='ready', mode='manual', duration=duration, audio=audio, clips=[], waveform=[])
+            return
         energies = []
         if audio:
             pcm = DATA / key / 'audio.pcm'
@@ -176,6 +179,9 @@ class Handler(BaseHTTPRequestHandler):
                     return self.reply(413, {'error': 'Choose a video smaller than 2 GB.'})
                 from urllib.parse import parse_qs, urlsplit
                 length = int(parse_qs(urlsplit(self.path).query).get('length', ['30'])[0])
+                mode = parse_qs(urlsplit(self.path).query).get('mode', ['auto'])[0]
+                if mode not in ['auto', 'manual']:
+                    raise ValueError('Unknown editing mode.')
                 if length not in [15, 30, 60]:
                     raise ValueError('Choose 15, 30, or 60 seconds.')
                 key = uuid.uuid4().hex
@@ -190,7 +196,7 @@ class Handler(BaseHTTPRequestHandler):
                         f.write(chunk)
                         remaining -= len(chunk)
                 JOBS[key] = {'status': 'analyzing', 'id': key}
-                threading.Thread(target=analyze, args=(key, length), daemon=True).start()
+                threading.Thread(target=analyze, args=(key, length, mode == 'manual'), daemon=True).start()
                 return self.reply(202, {'id': key})
             match = re.fullmatch(r'/api/export/([a-f0-9]{32})', self.path)
             if match and JOBS.get(match[1], {}).get('status') == 'ready':

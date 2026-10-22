@@ -75,6 +75,26 @@ class Workflow(unittest.TestCase):
             for b in clips[i+1:]:
                 self.assertTrue(a['end'] <= b['start'] or b['end'] <= a['start'])
 
+    def test_manual_upload_skips_audio_analysis(self):
+        with self.request('/api/upload?length=30&mode=manual', self.video.read_bytes()) as res:
+            key = json.load(res)['id']
+        for _ in range(100):
+            with self.request('/api/jobs/'+key) as res:
+                job = json.load(res)
+            if job['status'] != 'analyzing':
+                break
+            time.sleep(.1)
+        self.assertEqual(job['status'], 'ready')
+        self.assertEqual(job['mode'], 'manual')
+        self.assertEqual(job['clips'], [])
+        self.assertEqual(job['waveform'], [])
+        self.assertFalse((app.DATA/key/'audio.pcm').exists())
+        with self.request('/api/export/'+key, json.dumps({'start':0,'end':2,'framing':'original'}).encode()) as res:
+            url = json.load(res)['url']
+        info=json.loads(app.run(['ffprobe','-v','error','-show_streams','-of','json',str(app.DATA/key/url.rsplit('/',1)[1])]).stdout)
+        video=next(s for s in info['streams'] if s['codec_type']=='video')
+        self.assertEqual((video['width'],video['height']),(320,180))
+
     def test_silent_and_short_video_selection(self):
         self.assertEqual(app.select_clips([],4,30),[{'start':0.0,'end':4,'energy':0.0}])
         self.assertEqual(app.select_clips([],90,30)[0]['start'],0)
